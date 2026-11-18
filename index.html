@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Six-step Harvard course-planning prototype with a clearly disclosed limited saved catalog.">
+  <title>Harvard Unified Course Planner</title>
+  <style>
+    :root{--crimson:#a51c30;--ink:#17202a;--muted:#667085;--line:#d7dce2;--paper:#fff;--wash:#f6f7f8;--warn:#fff7e6;--warnline:#d99000;--ok:#eaf7ef;--shadow:0 12px 35px rgba(25,35,45,.09)}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(150deg,#f1f3f5,#fff 55%,#f7eeee);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+    button,input,select,textarea{font:inherit} button{cursor:pointer} a{color:#7e1425} .shell{max-width:1040px;margin:0 auto;padding:28px 18px 48px}
+    header{background:linear-gradient(115deg,#7e1425,var(--crimson));color:#fff;padding:28px;border-radius:18px;box-shadow:var(--shadow)}
+    header h1{margin:0 0 5px;font-family:Georgia,serif;font-size:clamp(28px,5vw,46px);font-weight:500} header p{margin:0;max-width:760px;color:#f8e9ec}
+    .status{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.pill{border:1px solid rgba(255,255,255,.5);border-radius:99px;padding:5px 10px;font-size:12px}
+    .warning{margin:18px 0;background:var(--warn);border:1px solid #f2d392;border-left:5px solid var(--warnline);padding:14px 16px;border-radius:10px}.warning strong{display:block;margin-bottom:3px}
+    nav{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:18px 0}.step{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 5px;color:var(--muted)}.step b{display:block}.step.active{background:var(--crimson);border-color:var(--crimson);color:#fff}.step.done{border-color:#c99aa3;color:#7e1425}
+    main{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:clamp(18px,4vw,32px);box-shadow:var(--shadow);min-height:440px} h2{margin:0 0 6px;font:500 29px Georgia,serif}.lead{color:var(--muted);margin:0 0 22px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field label{display:block;font-weight:650;margin-bottom:5px}.field small{display:block;color:var(--muted);margin-top:4px}input[type=text],input[type=number],select,textarea{width:100%;border:1px solid #b9c0c8;border-radius:9px;padding:10px 11px;background:#fff;color:var(--ink)}textarea{min-height:95px;resize:vertical}
+    .choice,.course,.draft,.check{border:1px solid var(--line);border-radius:11px;padding:14px;margin:9px 0;background:#fff}.choice{display:flex;gap:10px;align-items:flex-start}.choice input{margin-top:4px}.check{display:block}.courseHead{display:flex;justify-content:space-between;gap:16px}.course h3{margin:0}.score{font-size:22px;color:var(--crimson);font-weight:750}.meta{color:var(--muted);font-size:13px}.course p{margin:8px 0}.tag{display:inline-block;background:var(--wash);border-radius:99px;padding:3px 8px;margin:2px;font-size:12px}
+    .weights{display:grid;gap:12px}.weight{display:grid;grid-template-columns:150px 1fr 38px;align-items:center;gap:10px}.weight input{width:100%;accent-color:var(--crimson)}
+    .actions{display:flex;justify-content:space-between;gap:10px;margin-top:20px}.btn{border:1px solid var(--line);border-radius:9px;padding:10px 15px;background:#fff;color:var(--ink)}.btn.primary{background:var(--crimson);color:#fff;border-color:var(--crimson);font-weight:700}.btn:disabled{opacity:.45;cursor:not-allowed}
+    .empty{padding:28px;text-align:center;background:var(--wash);border-radius:12px;color:var(--muted)}.summary{background:var(--wash);border-radius:10px;padding:14px;margin-bottom:16px}.draft.selected{border:2px solid var(--crimson)}
+    footer{color:var(--muted);font-size:12px;padding:20px 4px;text-align:center}
+    @media(max-width:720px){nav{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}.weight{grid-template-columns:110px 1fr 34px}.courseHead{display:block}.shell{padding:12px 10px 34px}header{border-radius:12px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>Harvard Unified Course Planner</h1>
+    <p>A six-step planning prototype for exploring goals, comparing saved course candidates, and producing draft schedules and a registration checklist.</p>
+    <div class="status"><span class="pill">Class demonstration</span><span class="pill">7 saved HKS records</span><span class="pill">Works entirely in this browser</span></div>
+  </header>
+  <section class="warning" role="note"><strong>Catalog limitation</strong>This prototype uses a limited, saved Spring 2027 HKS sample. It does not search the complete Harvard, MIT, or Fletcher catalogs; it has no live timetable, seat, eligibility, HarvardKey, or registration access. Confirm every result in official systems before acting.</section>
+  <nav id="steps" aria-label="Planner steps"></nav>
+  <main id="app" tabindex="-1"></main>
+  <footer>No information leaves this browser. Your entries are saved only in this browser's local storage and can be cleared in Step 6.</footer>
+</div>
+<script>
+(()=>{
+  'use strict';
+  const courses=[
+    {id:'MLD 412',title:'Greater Boston Applied Field Lab',school:'HKS',credits:4,instructor:'See official listing',type:'Full term',description:'Applied local-government projects involving budgeting, finance, operations, and fieldwork.',tags:['local government','budget','operations','leadership'],note:'Saved record says instructor permission and an application may be required.',url:'https://my.harvard.edu/course/MLD412/2027-Spring/001'},
+    {id:'MLD 308',title:'Leadership Decision Making: From Individuals to Institutions',school:'HKS',credits:4,instructor:'Jennifer Lerner (saved record)',type:'Full term',description:'Decision-making under uncertainty, behavioral science, leadership, and human judgment.',tags:['leadership','decision making','behavioral science'],note:'Meeting pattern and current availability are not verified.',url:'https://my.harvard.edu/course/MLD308/2027-Spring/001'},
+    {id:'MLD 280',title:'Advanced Workshop in Multiparty Negotiation and Conflict Resolution',school:'HKS',credits:4,instructor:'Brian Mandell (saved record)',type:'January term',description:'Intensive workshop in negotiation, mediation, and public conflict resolution.',tags:['negotiation','conflict','leadership'],note:'Saved record says a prior negotiation course is required.',url:'https://my.harvard.edu/course/MLD280/2027-Spring/January/001'},
+    {id:'MLD 605',title:'Public Service Supply Chains',school:'HKS',credits:4,instructor:'See official listing',type:'Full term',description:'Systems thinking, supply-chain strategy, and public-service delivery.',tags:['operations','logistics','public service'],note:'Meeting details and eligibility are not verified.',url:'https://my.harvard.edu/course/MLD605/2027-Spring/001'},
+    {id:'MLD 420M',title:'Federal Budget Policy',school:'HKS',credits:2,instructor:'See official listing',type:'January term',description:'Fiscal challenges, federal budgeting, infrastructure spending, and budget policy.',tags:['federal budget','finance','policy'],note:'Saved record describes a January intensive; verify the current calendar.',url:'https://my.harvard.edu/course/MLD420M/2027-Spring/001'},
+    {id:'MLD 427',title:'Strategic Finance for Nonprofit Leaders',school:'HKS',credits:4,instructor:'James Honan (saved record)',type:'Full term',description:'Financial statements, budgeting, organizational finance, and resource allocation.',tags:['finance','budget','nonprofit','leadership'],note:'Saved record describes a joint offering; details are not live.',url:'https://my.harvard.edu/course/MLD427/2027-Spring/Full-Term/001'},
+    {id:'MLD 215 B',title:'Negotiation and Leadership',school:'HKS',credits:4,instructor:'Robert Wilkinson (saved record)',type:'Full term',description:'Leadership and negotiation concepts, simulations, and interpersonal influence.',tags:['negotiation','leadership','management'],note:'Eligibility and meeting days require official confirmation.',url:'https://my.harvard.edu/course/MLD215/2027-Spring/B'}
+  ];
+  const schools=[['HKS','Harvard Kennedy School'],['HLS','Harvard Law School'],['HBS','Harvard Business School'],['FAS','Harvard Faculty of Arts and Sciences'],['HGSE','Harvard Graduate School of Education'],['GSD','Harvard Graduate School of Design'],['HSPH','Harvard T.H. Chan School of Public Health'],['HDS','Harvard Divinity School'],['MIT','Massachusetts Institute of Technology'],['FLETCHER','Tufts Fletcher School']];
+  const names=['Profile','Schools','Rank','Select','Drafts','Checklist'];
+  const defaults={step:0,program:'MC/MPA',term:'Spring 2027',credits:16,goals:'',notes:'',schools:['HKS'],weights:{goals:50,academic:20,format:15,access:15},selected:[],draft:0};
+  let state=load();
+  function load(){try{return Object.assign(structuredClone(defaults),JSON.parse(localStorage.getItem('hucp-state')||'{}'))}catch(e){return structuredClone(defaults)}}
+  function save(){localStorage.setItem('hucp-state',JSON.stringify(state))}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function nav(){document.querySelector('#steps').innerHTML=names.map((n,i)=>`<button class="step ${i===state.step?'active':i<state.step?'done':''}" data-go="${i}" aria-current="${i===state.step?'step':'false'}"><b>${i+1}</b>${n}</button>`).join('')}
+  function tokens(){return (state.goals+' '+state.notes).toLowerCase().split(/[^a-z]+/).filter(w=>w.length>3&&!['course','harvard','want','with','that','this','from'].includes(w))}
+  function ranked(){const ts=[...new Set(tokens())];return courses.map(c=>{const hay=(c.title+' '+c.description+' '+c.tags.join(' ')).toLowerCase();const matches=ts.filter(t=>hay.includes(t));const goal=ts.length?Math.min(100,35+65*matches.length/ts.length):60;const academic=c.credits===4?85:72;const format=c.type==='Full term'?80:68;const access=/permission|required/i.test(c.note)?50:78;const w=state.weights;const den=Object.values(w).reduce((a,b)=>a+b,0)||1;return {...c,matches,score:Math.round((goal*w.goals+academic*w.academic+format*w.format+access*w.access)/den)}}).sort((a,b)=>b.score-a.score)}
+  function shell(title,lead,body,next='Continue →'){return `<h2>${title}</h2><p class="lead">${lead}</p>${body}<div class="actions"><button class="btn" id="back" ${state.step===0?'disabled':''}>← Previous</button><button class="btn primary" id="next">${next}</button></div>`}
+  function page0(){return shell('1. Build your profile','Set a planning target. No Harvard login or student record is connected.',`<div class="grid"><div class="field"><label for="program">Degree program</label><select id="program"><option>MC/MPA</option><option>MPP</option><option>MPA</option><option>MPA/ID</option><option>Other</option></select></div><div class="field"><label for="term">Term</label><select id="term"><option>Spring 2027</option></select><small>Only the saved Spring 2027 sample is included.</small></div><div class="field"><label for="credits">Target credits</label><input id="credits" type="number" min="2" max="32" step="2" value="${state.credits}"></div><div></div><div class="field"><label for="goals">Academic and career goals</label><textarea id="goals" placeholder="Example: public finance, leadership, and city management">${esc(state.goals)}</textarea></div><div class="field"><label for="notes">Constraints or preferences</label><textarea id="notes" placeholder="Example: include finance; avoid January courses">${esc(state.notes)}</textarea></div></div>`)}
+  function page1(){return shell('2. Choose schools','The interface shows the intended unified scope. Only HKS has saved records in this demonstration.',schools.map(([id,label])=>`<label class="choice"><input type="checkbox" name="school" value="${id}" ${state.schools.includes(id)?'checked':''}><span><strong>${label}</strong><br><span class="meta">${id==='HKS'?'7 saved sample records':'No records loaded — selecting this school will not fabricate results'}</span></span></label>`).join(''))}
+  function weightRows(){return Object.entries({goals:'Goal relevance',academic:'Academic depth',format:'Format fit',access:'Access likelihood'}).map(([k,label])=>`<div class="weight"><label for="w-${k}">${label}</label><input id="w-${k}" data-weight="${k}" type="range" min="0" max="100" value="${state.weights[k]}"><output>${state.weights[k]}</output></div>`).join('')}
+  function courseCard(c,select=false){return `<article class="course"><div class="courseHead"><div><h3>${esc(c.id)} · ${esc(c.title)}</h3><div class="meta">${c.school} · ${c.credits} credits · ${esc(c.type)} · ${esc(c.instructor)}</div></div><div class="score">${c.score}</div></div><p>${esc(c.description)}</p><div>${c.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><p class="meta"><strong>Important:</strong> ${esc(c.note)}</p><a href="${c.url}" target="_blank" rel="noopener">Open saved official-source link ↗</a>${select?`<label class="choice"><input type="checkbox" name="course" value="${esc(c.id)}" ${state.selected.includes(c.id)?'checked':''}><span>Add to draft pool</span></label>`:''}</article>`}
+  function page2(){const noHKS=!state.schools.includes('HKS');const cards=noHKS?'<div class="empty">No course records are available for the selected schools. Return to Step 2 and select HKS to view the limited sample.</div>':ranked().map(c=>courseCard(c)).join('');return shell('3. Review ranked candidates','Scores are a simple browser-side comparison of your words and adjustable preferences—not academic advice or an official recommendation.',`<div class="summary"><strong>Ranking weights</strong><div class="weights">${weightRows()}</div></div>${cards}`)}
+  function page3(){const cards=state.schools.includes('HKS')?ranked().map(c=>courseCard(c,true)).join(''):'<div class="empty">No loaded records match the selected schools.</div>';return shell('4. Select a planning pool','Choose courses to use in three draft combinations. This does not enroll, reserve a seat, or check conflicts.',cards)}
+  function drafts(){const pool=ranked().filter(c=>state.selected.includes(c.id));if(!pool.length)return [[],[],[]];const target=Number(state.credits)||16;const pack=list=>{let sum=0;return list.filter(c=>sum+c.credits<=target?(sum+=c.credits,true):false)};return [pack(pool),pack([...pool].sort((a,b)=>b.credits-a.credits||b.score-a.score)),pack([...pool].sort((a,b)=>a.type.localeCompare(b.type)||b.score-a.score))]}
+  function page4(){const ds=drafts();const labels=['Best overall fit','Full-credit emphasis','Format-varied option'];const body=!state.selected.length?'<div class="empty">Choose at least one course in Step 4 to create drafts.</div>':ds.map((d,i)=>`<article class="draft ${state.draft===i?'selected':''}"><label><input type="radio" name="draft" value="${i}" ${state.draft===i?'checked':''}> <strong>${labels[i]}</strong></label><p>${d.map(c=>`${esc(c.id)} — ${esc(c.title)} (${c.credits})`).join('<br>')||'No course fits the target.'}</p><div class="meta">${d.reduce((s,c)=>s+c.credits,0)} planned credits · Times and conflicts not verified</div></article>`).join('');return shell('5. Compare draft plans','These are combinations, not timetables: meeting days, overlaps, lotteries, prerequisites, and cross-registration remain unverified.',body)}
+  function page5(){const chosen=drafts()[state.draft]||[];const body=`<div class="summary"><strong>Selected draft</strong><p>${chosen.length?chosen.map(c=>`${esc(c.id)} — ${esc(c.title)}`).join('<br>'):'No draft selected.'}</p></div>${['Open each official listing and confirm it is offered','Verify meeting dates, times, and schedule conflicts','Check eligibility, prerequisites, lotteries, and permission requirements','For non-HKS courses, review official cross-registration rules','Confirm credits satisfy your degree requirements with HKS','Register only through the official system'].map((x,i)=>`<label class="check"><input type="checkbox"> ${i+1}. ${x}</label>`).join('')}<div class="actions"><button class="btn" id="print">Print / Save PDF</button><button class="btn" id="clear">Clear my browser data</button></div>`;return shell('6. Registration verification checklist','The planner stops at preparation. Complete every check in official systems before registration.',body,'Start again ↺')}
+  function bind(){
+    document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{state.step=Number(b.dataset.go);save();render()});
+    document.querySelector('#back').onclick=()=>{state.step=Math.max(0,state.step-1);save();render()};
+    document.querySelector('#next').onclick=()=>{capture();state.step=state.step===5?0:state.step+1;save();render()};
+    if(state.step===0){program.value=state.program;term.value=state.term}
+    document.querySelectorAll('[data-weight]').forEach(r=>r.oninput=e=>{state.weights[e.target.dataset.weight]=Number(e.target.value);e.target.nextElementSibling.value=e.target.value;save()});
+    document.querySelector('#print')?.addEventListener('click',()=>window.print());
+    document.querySelector('#clear')?.addEventListener('click',()=>{if(confirm('Clear all planner entries saved in this browser?')){localStorage.removeItem('hucp-state');state=structuredClone(defaults);render()}})
+  }
+  function capture(){
+    if(state.step===0){state.program=program.value;state.term=term.value;state.credits=Number(credits.value)||16;state.goals=goals.value;state.notes=notes.value}
+    if(state.step===1)state.schools=[...document.querySelectorAll('input[name=school]:checked')].map(x=>x.value);
+    if(state.step===3)state.selected=[...document.querySelectorAll('input[name=course]:checked')].map(x=>x.value);
+    if(state.step===4)state.draft=Number(document.querySelector('input[name=draft]:checked')?.value||0);
+  }
+  function render(){nav();const pages=[page0,page1,page2,page3,page4,page5];document.querySelector('#app').innerHTML=pages[state.step]();bind();document.querySelector('#app').focus({preventScroll:true});}
+  window.addEventListener('error',e=>console.error('Planner error:',e.error||e.message));render();
+})();
+</script>
+</body>
+</html>

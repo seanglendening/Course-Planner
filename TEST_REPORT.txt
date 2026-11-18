@@ -1,0 +1,22 @@
+HARVARD UNIFIED COURSE PLANNER — TEST REPORT
+Test date: November 18, 2026
+
+PASS — HTML and JavaScript parse without syntax errors.
+PASS — Browser loads the planner from a plain static web server.
+PASS — All six steps can be completed in order.
+PASS — Profile text changes the browser-side course ranking.
+PASS — Course selection produces three draft combinations.
+PASS — Registration checklist contains six verification actions.
+PASS — No browser console errors or warnings during the full workflow.
+PASS — Desktop checklist layout was visually inspected after correction.
+PASS — Mobile layout tested at 390 x 844 with no horizontal overflow.
+PASS — Limited-catalog warning remains prominent and names unavailable features.
+PASS — Schools without loaded records do not produce invented recommendations.
+
+NOT TESTED / NOT CLAIMED
+- Public unauthenticated URL: no supported hosting account is connected.
+- Complete or live Harvard, MIT, or Fletcher catalog coverage.
+- Live timetables, seat status, eligibility, HarvardKey, or registration.
+- Accuracy of saved Spring 2027 course details at the time of use.
+
+The public URL must be tested in a private/incognito browser after publication.
